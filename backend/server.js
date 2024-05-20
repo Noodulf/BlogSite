@@ -2,9 +2,40 @@ const express = require('express');
 const app = express();
 const port = 3000;
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
 app.use(express.json());
 
 const users=[];
+const posts =[
+    {
+        name: 'first',
+        post: 'This is my first post'
+    },
+    {
+        name: 'second',
+        post: 'This is the second user'
+    },
+    {
+        name: 'third',
+        post: 'This is the third user'
+    }
+]
+
+async function tokenAuthenticate(req, res, next){
+    const token = req.headers["authorization"].split(' ')[1];
+    if(!token) return res.status(401).send("No token provided");
+    try{
+        jwt.verify(token, 'Noodulf', (err, user)=>{
+            if(err) return res.status(401).send("Invalid token");
+            req.user = user;
+            next();
+        })
+    }
+    catch(error){
+        console.log("Some token error: ",error);
+    }
+}
 
 app.post('/signup', async (req, res)=>{
     let payload = req.body;
@@ -21,7 +52,14 @@ app.post('/login', async (req, res)=>{
     try{
 
         if(await bcrypt.compare(req.body.password, user.password)){
-            res.send('Logged in successfully');
+            const token = jwt.sign(user, 'Noodulf');
+            res.json(
+                {
+                    token: token,
+                    message: "Logged in successfully"
+                }
+            )
+
         }
         else{
             res.send("Invalid password");
@@ -31,6 +69,11 @@ app.post('/login', async (req, res)=>{
         console.log("Login error: ",error);
     }
         
+})
+
+app.get('/posts', tokenAuthenticate, (req, res)=>{
+    const post= posts.find(post=>post.name==req.user.name);
+    res.send(post);
 })
 
 app.listen(port, ()=>{
