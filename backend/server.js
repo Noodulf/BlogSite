@@ -13,6 +13,7 @@ const db = mysql.createConnection({
     database: 'blogsite'
 })
 app.use(express.json());
+//app.use(bodyparser.json());
 
 const users=[];
 const posts =[
@@ -48,10 +49,15 @@ async function tokenAuthenticate(req, res, next){
 app.post('/signup', async (req, res)=>{
     let payload = req.body;
     console.log(payload);
-    res.send(`Welcome ${payload.name}!`);
     let password = await bcrypt.hash(payload.password, 10);
     users.push({name: payload.name, password: password});
     console.log(users);
+    const query= "insert into users (username, password_hash) values (?, ?)";
+    let values = [payload.name, password];
+    db.query(query , values, (err, results)=>{
+        if(err) throw err;
+        console.log("Inserted into database", results);
+    })
 })
 
 app.post('/login', async (req, res)=>{
