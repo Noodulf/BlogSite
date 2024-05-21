@@ -3,7 +3,15 @@ const app = express();
 const port = 3000;
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const mysql = require('mysql2');
 
+
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'password',
+    database: 'blogsite'
+})
 app.use(express.json());
 
 const users=[];
